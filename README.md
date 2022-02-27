@@ -16,11 +16,12 @@ Also instructuions of how to provision EKS using terraform you can find in my re
 
   * Cert Manager will be deployed to cluster after provisioning 
 
-
 ### What is NGINX Ingress?
 
 ingress-nginx is an Ingress controller for Kubernetes using NGINX as a reverse proxy and load balancer.
 https://github.com/kubernetes/ingress-nginx
+
+![ingress](images/ingress.png)
 
 ### What is a cert-manager?
 
@@ -39,21 +40,95 @@ You can read in my post how I am using those components to secure traffic to you
 
 * Deploy 2 services on Kubernetes - which will function via http/s
 
-* Install and configure 2 routes, each service should expose an endpoint
+* Install and configure two routes, each service should expose an endpoint
 named
-  * “/routea” pointing 2 service A
-  * “/routeb” pointing to service B
+  * "/routea" pointing to service A (nginx server deployed to a-ns namespace)
+  * "/routeb" pointing to service B (nginx server deployed to b-ns namespace)
 
 
 # Solution
+  I will use battle tested solutions like nginx-ingress and cert-manager in my solution
   
-  In case you not deployed ingress-nginx and cert manager as part of EKS provision with terraform, you can do it manually with helm:
+  In case you not deployed ingress-nginx and cert manager as part of EKS provisioning with terraform, you can do it manually with helm:
   
+```bash
+  # ingress-nginx
+  $ helm repo add nginx-stable https://helm.nginx.com/stable
+  $ helm repo update
+  $ helm install my-release nginx-stable/nginx-ingress
 
+  # cert-manager
+  $ helm repo add jetstack https://charts.jetstack.io
+  $ helm repo update
+  $ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.crds.yaml
+  $ helm install \
+    cert-manager jetstack/cert-manager \
+    --namespace cert-manager \
+    --create-namespace \
+    --version v1.7.1 \
+```
 
-  Let's deploy first service to 'a-ns' namespace
+Let's deploy first nginx server to 'a-ns' namespace
+```bash
+  $ kubectl create ns a-ns
+  $ kubectl create deployment nginxa --image=nginx -n a-ns
+  $ kubectl expose deployment nginxa --port=80 -n a-ns
+```
 
-  Let's deploy second service to 'b-ns' namespace
+Create ingress rule for the first service
+```yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginxa
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - host: nginx.your-domain.com
+    http:
+      paths:
+      - path: /routea
+        backend:
+          serviceName: nginxa
+          servicePort: 80
+```
 
+Deploy ingress-nginxa.yaml
+```bash
+$ kubectl apply -f ingress-nginxa.yaml
+```
 
+Let's deploy second service to 'b-ns' namespace
+```bash
+  $ kubectl create ns b-ns
+  $ kubectl create deployment nginxb --image=nginx -n b-ns
+  $ kubectl expose deployment nginxb --port=80 -n b-ns
+```
+
+Create ingress rule for the second service
+```yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginxb
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  rules:
+  - host: nginx.your-domain.com
+    http:
+      paths:
+      - path: /routeb
+        backend:
+          serviceName: nginxb
+          servicePort: 80
+```
+
+Deploy ingress-nginxb.yaml
+```bash
+$ kubectl apply -f ingress-nginxb.yaml
+```
 
