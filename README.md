@@ -35,6 +35,13 @@ I will use Ingress Nginx as ingress controller and Cert Manager to issue 'self s
 
 You can read in my post how I am using those components to secure traffic to your application: https://talks.cloudify.co/secure-traffic-to-your-application-with-kubernetes-and-cert-manager-cc2b44d29beb
 
+nginx.your-domain.com is used in examples below and must be configured in route53 or other service you use.
+In route53 you need create alias to your LB(created after ingress nginx deployed), you can find of how to do it in my post: https://warolv.medium.com/building-the-ci-cd-of-the-future-nginx-ingress-cert-manager-945f3dc6b12e
+
+Can be created as part of terraform scripts, but need to use 3rd parties and different permissions and I don't want to complicate it.
+
+
+
 
 # Problem
 
