@@ -5,6 +5,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
+    cert-manager.io/issuer: "selfsigned-issuer"
 spec:
   rules:
   - host: nginx.trn.cloudify.co
@@ -14,3 +15,7 @@ spec:
         backend:
           serviceName: nginxb
           servicePort: 80
+  tls:
+  - hosts:
+    - nginx.trn.cloudify.co
+    secretName: nginxb-secret

@@ -132,3 +132,97 @@ Deploy ingress-nginxb.yaml
 $ kubectl apply -f ingress-nginxb.yaml
 ```
 
+## Enabling https for first and second services
+
+Will use cert-manager with issuer created for self-signed certificates:
+
+First service
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: a-ns
+spec:
+  selfSigned: {}
+```
+
+```bash
+$ kubectl apply -f issuera.yaml
+```
+
+Changes to ingress to issue automatically new certificate:
+
+```yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginxa
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    cert-manager.io/issuer: "selfsigned-issuer"
+spec:
+  rules:
+  - host: nginx.trn.cloudify.co
+    http:
+      paths:
+      - path: /routea
+        backend:
+          serviceName: nginxa
+          servicePort: 80
+  tls:
+  - hosts:
+    - nginx.trn.cloudify.co
+    secretName: nginxa-secret
+```
+
+Look at 'tls' part and 'cert-manager.io/issuer: "selfsigned-issuer" lines. 
+
+Simple integration of cert-issuer into ingress-nginx makes it easy for implementation.
+Now you can access service with https (you will see warning because it's self signed cert and not public CA like Let's encrypt)
+
+Second service
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+  namespace: b-ns
+spec:
+  selfSigned: {}
+```
+
+```bash
+$ kubectl apply -f issuerb.yaml
+```
+
+Changes to ingress to issue automatically new certificate:
+
+```yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-nginxb
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    cert-manager.io/issuer: "selfsigned-issuer"
+spec:
+  rules:
+  - host: nginx.trn.cloudify.co
+    http:
+      paths:
+      - path: /routea
+        backend:
+          serviceName: nginxb
+          servicePort: 80
+  tls:
+  - hosts:
+    - nginx.trn.cloudify.co
+    secretName: nginxb-secret
+```
+
+You can find all manifests in [manifests](/manifests) folder.
