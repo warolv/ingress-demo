@@ -165,7 +165,7 @@ metadata:
     cert-manager.io/issuer: "selfsigned-issuer"
 spec:
   rules:
-  - host: nginx.trn.cloudify.co
+  - host: nginx.your-domain.com
     http:
       paths:
       - path: /routea
@@ -174,7 +174,7 @@ spec:
           servicePort: 80
   tls:
   - hosts:
-    - nginx.trn.cloudify.co
+    - nginx.your-domain.com
     secretName: nginxa-secret
 ```
 
@@ -212,7 +212,7 @@ metadata:
     cert-manager.io/issuer: "selfsigned-issuer"
 spec:
   rules:
-  - host: nginx.trn.cloudify.co
+  - host: nginx.your-domain.com
     http:
       paths:
       - path: /routea
@@ -221,7 +221,7 @@ spec:
           servicePort: 80
   tls:
   - hosts:
-    - nginx.trn.cloudify.co
+    - nginx.your-domain.com
     secretName: nginxb-secret
 ```
 
